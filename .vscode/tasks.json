@@ -1,0 +1,59 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "npm: dev",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*starting dev server.*",
+          "endsPattern": "^.*Local:.*"
+        }
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "开发 - 启动翻译APP",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "dev"],
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": {
+        "kind": "build"
+      }
+    },
+    {
+      "label": "构建 - 生成生产版本",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build"],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build"
+      }
+    },
+    {
+      "label": "打包 - 生成Windows exe",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "dist"],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build"
+      }
+    }
+  ]
+}

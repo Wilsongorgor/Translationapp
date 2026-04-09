@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "翻译应用 - 调试",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/electron",
+      "args": ["."],
+      "restart": true,
+      "runtimeArgs": ["--nolazy"],
+      "protocol": "inspector",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "skipFiles": ["<node_internals>/**"],
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "preLaunchTask": "npm: dev"
+    }
+  ]
+}

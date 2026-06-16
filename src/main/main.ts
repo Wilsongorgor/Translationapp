@@ -1,9 +1,9 @@
-import { app, BrowserWindow, Menu, ipcMain, clipboard, Tray, nativeImage, globalShortcut } from 'electron'
+﻿import { app, BrowserWindow, Menu, ipcMain, clipboard, Tray, nativeImage, globalShortcut } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import axios from 'axios'
 // @ts-ignore
-import translate from 'translate-google'
+// Google Translate via direct API
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -57,12 +57,18 @@ function getLangCode(lang: string): string {
 }
 
 async function translateViaGoogle(text: string, targetCode: string): Promise<string> {
-  const codeMap: Record<string, string> = {
-    'zh-CN': 'zh-CN', 'en': 'en', 'fr': 'fr', 'es': 'es',
-    'de': 'de', 'ja': 'ja', 'ko': 'ko',
-  }
-  const gc = codeMap[targetCode] || targetCode
-  const result = await translate(text, { to: gc })
+  const resp = await axios.get('https://translate.googleapis.com/translate_a/single', {
+    params: {
+      client: 'gtx',
+      sl: 'auto',
+      tl: targetCode,
+      dt: 't',
+      q: text,
+    },
+    timeout: 5000,
+    headers: { 'User-Agent': 'Mozilla/5.0' },
+  })
+  const result = resp.data?.[0]?.map((seg: any) => seg[0]).filter(Boolean).join('')
   if (result && result.trim()) return result
   throw new Error('Empty translation result')
 }
@@ -269,3 +275,4 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })
 app.on('activate', () => { if (mainWindow === null) createWindow() })
 app.on('will-quit', () => { globalShortcut.unregisterAll(); stopClipboardMonitor() })
+

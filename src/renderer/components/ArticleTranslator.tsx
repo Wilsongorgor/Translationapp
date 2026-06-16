@@ -1,130 +1,56 @@
-import { useState } from 'react'
-import { translateText } from '../../api/translator'
-import styles from './ArticleTranslator.module.css'
+import { useState } from 'react';
+import { translateText } from '../../api/translator';
+import styles from './ArticleTranslator.module.css';
 
 export default function ArticleTranslator() {
-  const [articleText, setArticleText] = useState('')
-  const [translatedArticle, setTranslatedArticle] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [progress, setProgress] = useState(0)
+  const [src, setSrc] = useState('');
+  const [dst, setDst] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [pct, setPct] = useState(0);
 
-  const handleTranslate = async () => {
-    if (!articleText.trim()) {
-      setError('请输入要翻译的文章')
-      return
-    }
-
-    setLoading(true)
-    setError('')
-    setProgress(0)
-
+  const translate = async () => {
+    if(!src.trim())return setError('请输入文章');
+    setLoading(true);setError('');setPct(0);
     try {
-      // Split article into paragraphs
-      const paragraphs = articleText.split('\n\n').filter((p) => p.trim())
-      const translations: string[] = []
-
-      for (let i = 0; i < paragraphs.length; i++) {
-        const para = paragraphs[i]
-        try {
-          // Use undefined as targetLang to let main process auto-detect
-          const result = await translateText(para, undefined, 'google')
-          
-          // Extract translatedText from result object
-          if (typeof result === 'object' && result !== null && 'translatedText' in result) {
-            translations.push(result.translatedText)
-          } else {
-            // Fallback for string result
-            translations.push(result as string)
-          }
-        } catch (error) {
-          console.error(`Paragraph ${i + 1} translation error:`, error)
-          translations.push(`[翻译失败] ${para}`)
-        }
-        setProgress(Math.round(((i + 1) / paragraphs.length) * 100))
+      const paras = src.split('\n\n').filter(p=>p.trim());
+      const out=[];
+      for(let i=0;i<paras.length;i++){
+        try{
+          const r=await translateText(paras[i], undefined, 'google');
+          out.push(typeof r==='object'&&r&&'translatedText' in r?r.translatedText:r);
+        }catch{out.push('[翻译失败] '+paras[i]);}
+        setPct(Math.round((i+1)/paras.length*100));
       }
+      setDst(out.join('\n\n'));
+    }catch(e){setError(e instanceof Error?e.message:'翻译失败');}
+    finally{setLoading(false);}
+  };
 
-      setTranslatedArticle(translations.join('\n\n'))
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : '文章翻译失败，请重试'
-      setError(errorMsg)
-      console.error('Translation error:', error)
-    } finally {
-      setLoading(false)
-      setProgress(0)
-    }
-  }
+  const copy=()=>{window.electron?.setClipboardText(dst);};
+  const download=()=>{
+    const el=document.createElement('a');
+    el.href=URL.createObjectURL(new Blob(['\uFEFF'+dst],{type:'text/plain;charset=utf-8'}));
+    el.download='翻译结果.txt';
+    document.body.appendChild(el);el.click();document.body.removeChild(el);
+  };
+  const clear=()=>{setSrc('');setDst('');setError('');};
 
-  const handleClear = () => {
-    setArticleText('')
-    setTranslatedArticle('')
-    setError('')
-  }
-
-  const copyToClipboard = () => {
-    window.electron?.setClipboardText(translatedArticle)
-    alert('已复制到剪贴板')
-  }
-
-  const downloadTranslation = () => {
-    const element = document.createElement('a')
-    const file = new Blob([translatedArticle], { type: 'text/plain;charset=utf-8' })
-    element.href = URL.createObjectURL(file)
-    element.download = '翻译结果.txt'
-    document.body.appendChild(element)
-    element.click()
-    document.body.removeChild(element)
-  }
-
-  return (
-    <div className={styles.container}>
-      <div className={styles.section}>
-        <div className={styles.header}>
-          <h3>原始文章</h3>
-          <span className={styles.info}>{articleText.length} 字符</span>
-        </div>
-        <textarea
-          className={styles.textarea}
-          value={articleText}
-          onChange={(e) => {
-            setArticleText(e.target.value)
-            setError('')
-          }}
-          placeholder="粘贴或输入要翻译的文章..."
-        />
-        <div className={styles.actions}>
-          <button className={styles.btn} onClick={handleTranslate} disabled={loading || !articleText.trim()}>
-            {loading ? `翻译中 ${progress}%` : '翻译文章'}
-          </button>
-          <button className={styles.btn} onClick={handleClear}>
-            清空
-          </button>
-        </div>
-        {error && <div className={styles.error}>{error}</div>}
-        {loading && <div className={styles.progressBar}></div>}
+  return (<div className={styles.wrap}>
+    <div className={styles.panel}>
+      <div className={styles.panelHead}><span className={styles.panelTitle}>原文</span><span className={styles.panelMeta}>{src.length} 字符</span></div>
+      <div className={styles.panelContent}><textarea className={styles.textArea} value={src} onChange={e=>{setSrc(e.target.value);setError('');}} placeholder='粘贴文章内容...' /></div>
+      <div className={styles.panelFooter}>
+        <button className={styles.btnSecondary} onClick={clear}>清空</button>
+        <div style={{flex:1}}/>
+        <button className={styles.btnPrimary} onClick={translate} disabled={loading||!src.trim()}>{loading?'翻译中 '+pct+'%':'翻译文章'}</button>
       </div>
-
-      <div className={styles.section}>
-        <div className={styles.header}>
-          <h3>翻译结果</h3>
-          {translatedArticle && (
-            <div className={styles.resultActions}>
-              <button className={styles.smallBtn} onClick={copyToClipboard}>
-                复制
-              </button>
-              <button className={styles.smallBtn} onClick={downloadTranslation}>
-                下载
-              </button>
-            </div>
-          )}
-        </div>
-        <textarea
-          className={styles.textarea}
-          value={translatedArticle}
-          readOnly
-          placeholder="翻译结果将显示在这里..."
-        />
-      </div>
+      {loading&&<div className={styles.progressWrap}><div className={styles.progressTrack}><div className={styles.progressFill} style={{width:pct+'%'}}/></div><div className={styles.progressText}>正在翻译...</div></div>}
+      {error&&<div className={styles.errorToast}>{error}</div>}
     </div>
-  )
+    <div className={styles.panel}>
+      <div className={styles.panelHead}><span className={styles.panelTitle}>翻译结果</span>{dst&&<div style={{display:'flex',gap:6}}><button className={styles.btnSecondary} onClick={copy}>复制</button><button className={styles.btnSecondary} onClick={download}>下载</button></div>}</div>
+      <div className={styles.panelContent}>{dst?<div className={styles.transOutput}>{dst}</div>:<div className={styles.placeholder}>翻译结果将显示在这里</div>}</div>
+    </div>
+  </div>);
 }

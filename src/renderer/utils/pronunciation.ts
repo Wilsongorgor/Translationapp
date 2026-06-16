@@ -14,11 +14,9 @@ const pronunciationCache: Record<string, { uk: string; us: string; audio?: strin
   'am': { uk: 'æm', us: 'æm' },
   'are': { uk: 'ɑːr', us: 'ɑːr' },
   'go': { uk: 'ɡəʊ', us: 'ɡoʊ' },
-  'no': { uk: 'nəʊ', us: 'noʊ' },
   
   // 问候和常用
   'hello': { uk: 'həˈləʊ', us: 'həˈloʊ' },
-  'hi': { uk: 'haɪ', us: 'haɪ' },
   'hey': { uk: 'heɪ', us: 'heɪ' },
   'goodbye': { uk: 'ɡʊdˈbaɪ', us: 'ɡʊdˈbaɪ' },
   'thanks': { uk: 'θæŋks', us: 'θæŋks' },
